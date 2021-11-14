@@ -85,38 +85,54 @@ int main(int argc, char const *argv[])
     matriz2_e.close();
 
     //matriz resultado
-    vector<vector<int>> matriz_resultado (matriz1_linha, vector<int> (matriz2_coluna));
+    //vector<vector<int>> matriz_resultado (matriz1_linha, vector<int> (matriz2_coluna));
+    vector<vector<int>> matriz_resultado;
     int acumula = 0;
-        int contador = 0;
-        auto inicio_time = chrono::steady_clock::now();
-        for (int linha = 0; linha < matriz1_linha; linha++)  
+    auto inicio_time = chrono::steady_clock::now();
+    /*for (int linha = 0; linha < matriz1_linha; linha++) 
+    {
+        for (int coluna = 0; coluna < matriz2_coluna; coluna++)  
         {
-            for (int coluna = 0; coluna < matriz2_coluna; coluna++)  
+            for (int k = 0; k < matriz1_linha; k++)  
             {
-                for (int i = 0; i < matriz1_linha; i++)  
-                {
-                    acumula = acumula + matriz1[linha][i] * matriz2[i][coluna];  
-                }
-                matriz_resultado[linha][coluna] = acumula;
-                acumula = 0;  
+                acumula = acumula + matriz1[linha][k] * matriz2[k][coluna];  
             }
+            matriz_resultado[linha][coluna] = acumula;
+            acumula = 0;  
         }
-        auto final_time = chrono::steady_clock::now();
-        auto time_total = chrono::duration_cast<chrono::microseconds>(final_time - inicio_time).count();
+    }  */  
+    for (int i = 0; i < matriz1_linha; i++)
+    {
+        matriz_resultado.push_back(vector<int>());
+        for (int j = 0; j < matriz2_coluna; j++)
+        {
+            matriz_resultado[i].push_back(0);
+            for (int k = 0; k < matriz1_linha; k++)
+            {
+                matriz_resultado[i][j] += matriz1[i][k] * matriz2[k][j];
+            }
+            
+        }
         
-        //salvando resultado em txt
-        ofstream matriz_resultado_txt;
-        matriz_resultado_txt.open("matriz_resultado_sequencial.txt");
-        matriz_resultado_txt << matriz1_linha << " " << matriz2_coluna << endl;
-        //escrevendo noa arquivo o resultado
-        for (int i = 0; i < matriz1_coluna; i++)
+    }
+    
+
+    auto final_time = chrono::steady_clock::now();
+    auto time_total = chrono::duration_cast<chrono::microseconds>(final_time - inicio_time).count();
+        
+    //salvando resultado em txt
+    ofstream matriz_resultado_txt;
+    matriz_resultado_txt.open("matriz_resultado_sequencial.txt");
+    matriz_resultado_txt << matriz1_linha << " " << matriz2_coluna << endl;
+    //escrevendo noa arquivo o resultado
+    for (int i = 0; i < matriz1_coluna; i++)
+    {
+        for (int j = 0; j < matriz2_linha; j++)
         {
-            for (int j = 0; j < matriz2_linha; j++)
-            {
-                matriz_resultado_txt<< "c" << i << j << " " << matriz_resultado[i][j] << endl;
-            }
+            matriz_resultado_txt<< "c" << i << j << " " << matriz_resultado[i][j] << endl;
         }
-        matriz_resultado_txt << time_total;
-        matriz_resultado_txt.close();
+    }
+    matriz_resultado_txt << time_total;
+    matriz_resultado_txt.close();        
     return 0;
 }
