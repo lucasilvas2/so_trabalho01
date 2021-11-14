@@ -122,7 +122,7 @@ int main(int argc, char const *argv[])
         
     //salvando resultado em txt
     ofstream matriz_resultado_txt;
-    matriz_resultado_txt.open("matriz_resultado_sequencial.txt");
+    matriz_resultado_txt.open("resultado _sequencial/matriz_resultado_sequencial.txt");
     matriz_resultado_txt << matriz1_linha << " " << matriz2_coluna << endl;
     //escrevendo noa arquivo o resultado
     for (int i = 0; i < matriz1_coluna; i++)

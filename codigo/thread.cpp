@@ -216,13 +216,15 @@ int main(int argc, char const *argv[])
     for (int i = 0; i < qtd_threads; i++)
     {   
         ofstream resultado;
+        string pasta = "resultado_threads/";
         string nome_arquivo = "resultado_thread_";
         string id = to_string(i);
         string txt = ".txt";
-        nome_arquivo += id;
-        nome_arquivo += txt;
+        pasta += nome_arquivo;
+        pasta += id;
+        pasta += txt;
         
-        resultado.open(nome_arquivo);
+        resultado.open(pasta);
         resultado << matriz1_linha << " " << matriz2_coluna << endl;
         for (int k = 0; k < (s_thread[i].resultado.size()); k++)
         {
