@@ -19,6 +19,9 @@ struct struct_thread
     int thread_id;
     int tam_matriz;
     int elem_ultima_thread = 0;
+    vector<int> linha;
+    vector<int> coluna;
+    vector<int> resultado;
 };
 
 
@@ -61,6 +64,9 @@ void * multiplicacao_matriz(void * struct_t){
                 acumula = acumula + matriz1[linha][i] * matriz2[i][coluna];  
             }
             matriz_resultado[linha][coluna] = acumula;
+            thread_temp->linha.push_back(linha);
+            thread_temp->coluna.push_back(coluna);
+            thread_temp->resultado.push_back(matriz_resultado[linha][coluna]);
             //cout << "c["<< linha <<"][" << coluna << "] "<< matriz_resultado[linha][coluna] << endl;
             acumula = 0;
             if(coluna == matriz1_coluna -1){
@@ -202,11 +208,31 @@ int main(int argc, char const *argv[])
         //cout <<  "Processo esperando thread id : " << i << endl;
         //ofstream resultado_thread;
         //resultado_thread.open("resultado ");
-        cout << "Time =  " << time[i] << endl;
+        //cout << "Time =  " << time[i] << endl;
         pthread_join(threads[i], &thread_return);
         //cout <<  "Finalizando thread id : " << i<< endl;
     }
-
+    
+    for (int i = 0; i < qtd_threads; i++)
+    {   
+        ofstream resultado;
+        string nome_arquivo = "resultado_thread_";
+        string id = to_string(i);
+        string txt = ".txt";
+        nome_arquivo += id;
+        nome_arquivo += txt;
+        
+        resultado.open(nome_arquivo);
+        resultado << matriz1_linha << " " << matriz2_coluna << endl;
+        for (int k = 0; k < (s_thread[i].resultado.size()); k++)
+        {
+            resultado << "c[" << s_thread[i].linha[k] << "][" << s_thread[i].coluna[k] << "] " << s_thread[i].resultado[k] << endl;
+        }
+        resultado << time[i] << endl;
+        resultado.close();
+    }
+    
+    
     /*for (int i = 0; i < matriz2_linha; i++)
     {
         for (int j = 0; j < matriz2_coluna; j++)
