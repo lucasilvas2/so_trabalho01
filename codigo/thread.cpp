@@ -52,21 +52,22 @@ void * multiplicacao_matriz(void * struct_t){
     int controle = 0, acumula = 0, coluna = 0;
     for (int linha = inicial_linha; linha < matriz1_linha; linha++)  
     {
-        matriz_resultado.push_back(vector<int>());
+        //matriz_resultado.push_back(vector<int>());
         //cout << "c["<< linha <<"] "<< endl;
         
         for (coluna = inicial_coluna; coluna < matriz2_coluna; coluna++)  
         {
-            matriz_resultado[linha].push_back(0);
+            //matriz_resultado[linha].push_back(0);
             //cout << "c["<< linha <<"][" << coluna << "] "<< endl;
             for (int i = 0; i < matriz1_linha; i++)  
             {
                 acumula = acumula + matriz1[linha][i] * matriz2[i][coluna];  
             }
-            matriz_resultado[linha][coluna] = acumula;
+            //matriz_resultado[linha][coluna] = acumula;
             thread_temp->linha.push_back(linha);
             thread_temp->coluna.push_back(coluna);
-            thread_temp->resultado.push_back(matriz_resultado[linha][coluna]);
+            //thread_temp->resultado.push_back(matriz_resultado[linha][coluna]);
+            thread_temp->resultado.push_back(acumula);
             //cout << "c["<< linha <<"][" << coluna << "] "<< matriz_resultado[linha][coluna] << endl;
             acumula = 0;
             if(coluna == matriz1_coluna -1){
@@ -80,27 +81,6 @@ void * multiplicacao_matriz(void * struct_t){
         }
         
     }
-    /*int controle = 0, acumula = 0;
-    for (int linha = 0; linha < matriz1_linha; linha++)  
-    {
-        matriz_resultado.push_back(vector<int>());
-        for (int coluna = 0; coluna < matriz2_coluna; coluna++)  
-        {
-            matriz_resultado[linha].push_back(0);
-            for (int i = 0; i < matriz1_linha; i++)  
-            {
-                acumula = acumula + matriz1[linha][i] * matriz2[i][coluna];  
-            }
-            matriz_resultado[linha][coluna] = acumula;
-            cout << "c["<< linha <<"][" << coluna << "] "<< matriz_resultado[linha][coluna] << endl;
-            acumula = 0;
-            if(controle == p - 1){
-                cout << "chegaaa" << endl;
-                pthread_exit(NULL);
-            }
-            controle++; 
-        }
-    }*/
     pthread_exit(NULL);
 }
 int main(int argc, char const *argv[])
@@ -183,9 +163,9 @@ int main(int argc, char const *argv[])
     
     for(i=0; i < qtd_threads ; i++){
         //cout <<  "Processo criando thread id : " << i << endl;
-        if(i > 0){
+        /*if(i > 0){
             pthread_join(threads[i - 1], &thread_return);
-        }
+        }*/
 
 
         if( i == (qtd_threads-1)){
