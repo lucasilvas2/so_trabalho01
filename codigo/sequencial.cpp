@@ -133,6 +133,9 @@ int main(int argc, char const *argv[])
         }
     }
     matriz_resultado_txt << time_total;
-    matriz_resultado_txt.close();        
+    matriz_resultado_txt.close(); 
+    ofstream resultado_principal;
+    resultado_principal.open("resultado_sequencial/resultado", ios::app);
+    resultado_principal << "M" << matriz1_linha << "x" << matriz2_coluna << " | Tempo = " << time_total <<" " << endl;     
     return 0;
 }
