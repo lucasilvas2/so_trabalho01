@@ -58,19 +58,14 @@ void multiplicando_matriz(int i, int * mem){
             }
             if(controle == *p - 1){
                 //cout << "hora de parar" << endl;
+                cout << "Filho " << id << " terimei..." << endl;
                 pthread_exit(NULL);
             }
             controle++; 
         }
     }
-    /*for (int i = 0; i < matriz2_linha; i++)
-    {
-        for (int j = 0; j < matriz2_coluna; j++)
-        {
-            cout << matriz1[i][j] << " ";
-        }
-        cout << endl;
-    }*/
+    cout << "Filho " << id << " terimei..." << endl;
+
 }
 
 int main(int argc, char const *argv[])
@@ -149,39 +144,69 @@ int main(int argc, char const *argv[])
 
     pid_t processo[qtd_processos];
     int * mem;
+    int * time;
+    //int time[qtd_processos];
     int seg_id = shmget(IPC_PRIVATE, total_elementos * sizeof(int), IPC_CREAT | 0666);
-    /*struct_processo s_processos[qtd_processos];
-    int seg_id = shmget(IPC_PRIVATE, qtd_processos * sizeof(struct_processo),  IPC_CREAT | 0666);*/
+    int seg_id1 = shmget(IPC_PRIVATE, total_elementos * sizeof(int), IPC_CREAT | 0666);
+    
     mem = (int *)shmat(seg_id, NULL, 0);
-    int time[qtd_processos];
+    time = (int *)shmat(seg_id1, NULL, 0);
+    
     for (int i = 0; i < qtd_processos; i++)
-    {
-        
+    {     
         auto inicio_time = chrono::steady_clock::now();
-        processo[i] = fork();
+        processo[i] = fork();       
         if(processo[i] < 0){
             cerr << "[ERRO] processo " << i << endl;
             exit(-1);
         }
         else if(processo[i] == 0){
-            //s_processos[i] = (struct_processo *) shmat(seg_id, NULL, 0);
-            multiplicando_matriz(i, mem);           
+            multiplicando_matriz(i, mem);
+            shmdt(mem);          
+            exit(0);          
+        }
+        else if(processo[i] > 0){
+            cout << "Esperando filho "<< i << "..."<<endl; 
+            int status = wait(NULL);
             auto final_time = chrono::steady_clock::now();
-            time[i] = chrono::duration_cast<chrono::milliseconds>(final_time - inicio_time).count();
-            
-            exit(0);
+            time[i] = chrono::duration_cast<chrono::microseconds>(final_time - inicio_time).count();
+            cout << "pai recebeu a resposta do filho " << status << "|tempo = " << time[i]<< endl;
         }
     }
     
+    int max_time = 0;
+    for (size_t i = 0; i < qtd_processos; i++)
+    {
+        ofstream resultado;
+        string pasta = "resultado_processo/";
+        string nome_arquivo = "resultado_processo_";
+        string id = to_string(i);
+        string txt = ".txt";
+        pasta += nome_arquivo;
+        pasta += id;
+        pasta += txt;
+        
+        resultado.open(pasta);
+        resultado << matriz1_linha << " " << matriz2_coluna << endl;
+        int controle = 0;
+        for (int i = 0; i < matriz2_linha; i++)
+        {
+            for (int j = 0; j < matriz2_coluna; j++)
+            {
+                resultado << "c" << i << j << " " << mem[controle++]<<endl;
+            }   
+        }
+        resultado << time[i] << endl;
+        resultado << time[i] << endl;
+        if(max_time< time[i]){
+            max_time = time[i];
+        }
+        resultado.close();
+    }
+    ofstream resultado_principal;
+    resultado_principal.open("resultado_processo/resultado", ios::app);
+    resultado_principal << "M" << matriz1_linha << "x" << matriz2_coluna <<" | P = " << *p <<" | Qtd processos = " << qtd_processos << " | Tempo = " << max_time <<" " << endl;
     
-    for (int i = 0; i < qtd_processos; i++)
-    {  
-      wait(NULL);
-    }
-    for (int i = 0; i < total_elementos; i++)
-    {   
-        cout << mem[i] << endl;
-    }
     return 0;
 }
 

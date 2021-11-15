@@ -193,9 +193,10 @@ int main(int argc, char const *argv[])
         //cout <<  "Finalizando thread id : " << i<< endl;
     }
     
+    int max_time = 0;
     for (int i = 0; i < qtd_threads; i++)
     {   
-        ofstream resultado;
+        ofstream resultado; 
         string pasta = "resultado_threads/";
         string nome_arquivo = "resultado_thread_";
         string id = to_string(i);
@@ -211,18 +212,14 @@ int main(int argc, char const *argv[])
             resultado << "c[" << s_thread[i].linha[k] << "][" << s_thread[i].coluna[k] << "] " << s_thread[i].resultado[k] << endl;
         }
         resultado << time[i] << endl;
+        if(max_time< time[i]){
+            max_time = time[i];
+        }
         resultado.close();
     }
-    
-    
-    /*for (int i = 0; i < matriz2_linha; i++)
-    {
-        for (int j = 0; j < matriz2_coluna; j++)
-        {
-            cout << matriz_resultado[i][j] << " ";
-        }
-        cout << endl;
-    }*/
+    ofstream resultado_principal;
+    resultado_principal.open("resultado_threads/resultado", ios::app);
+    resultado_principal << "M" << matriz1_linha << "x" << matriz2_coluna <<" | P = " << p <<" | Qtd threads = " << qtd_threads << " | Tempo = " << max_time <<" " << endl;
 
     return 0;
 }
