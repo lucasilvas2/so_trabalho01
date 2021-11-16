@@ -18,6 +18,7 @@ vector<vector<int>> matriz_resultado;
 
 void multiplicando_matriz(int i, int * mem){
 
+    //auto inicio_time = chrono::steady_clock::now();  
     int id = i;  
     int inicial_linha = 0;
     int inicial_coluna = 0;
@@ -58,13 +59,19 @@ void multiplicando_matriz(int i, int * mem){
             }
             if(controle == *p - 1){
                 //cout << "hora de parar" << endl;
-                cout << "Filho " << id << " terimei..." << endl;
+                //cout << "Filho " << id << " terimei..." << endl;
+                //auto final_time = chrono::steady_clock::now();
+                //time[i] = chrono::duration_cast<chrono::microseconds>(final_time - inicio_time).count(); 
+                //cout << "T " << time[i] << endl;  
                 pthread_exit(NULL);
             }
             controle++; 
         }
     }
-    cout << "Filho " << id << " terimei..." << endl;
+    //cout << "Filho " << id << " terimei..." << endl;
+    //auto final_time = chrono::steady_clock::now();
+    //time[i] = chrono::duration_cast<chrono::microseconds>(final_time - inicio_time).count(); 
+    //cout << "T " << time[i] << endl;  
 
 }
 
@@ -135,11 +142,11 @@ int main(int argc, char const *argv[])
     int qtd_processos;
     if(total_elementos % *p == 0){
         qtd_processos = total_elementos/ *p;
-        cout << "1 = " << qtd_processos << endl;
+        //cout << "1 = " << qtd_processos << endl;
     }
     else{
         qtd_processos = total_elementos/ *p+1;
-        cout << "2 = " << qtd_processos << endl;
+        //cout << "2 = " << qtd_processos << endl;
     }
 
     pid_t processo[qtd_processos];
@@ -151,27 +158,28 @@ int main(int argc, char const *argv[])
     
     mem = (int *)shmat(seg_id, NULL, 0);
     time = (int *)shmat(seg_id1, NULL, 0);
-    
+    auto inicio_time = chrono::steady_clock::now();
     for (int i = 0; i < qtd_processos; i++)
-    {     
-        auto inicio_time = chrono::steady_clock::now();
-        processo[i] = fork();       
+    {          
+        inicio_time = chrono::steady_clock::now(); 
+        processo[i] = fork();    
         if(processo[i] < 0){
             cerr << "[ERRO] processo " << i << endl;
             exit(-1);
         }
         else if(processo[i] == 0){
             multiplicando_matriz(i, mem);
-            shmdt(mem);          
+            shmdt(mem);
+            shmdt(time);   
             exit(0);          
         }
-        else if(processo[i] > 0){
-            cout << "Esperando filho "<< i << "..."<<endl; 
-            int status = wait(NULL);
-            auto final_time = chrono::steady_clock::now();
-            time[i] = chrono::duration_cast<chrono::microseconds>(final_time - inicio_time).count();
-            cout << "pai recebeu a resposta do filho " << status << "|tempo = " << time[i]<< endl;
-        }
+    }
+    
+    for (int i = 0; i < qtd_processos; i++)
+    {  
+        wait(NULL);
+        auto final_time = chrono::steady_clock::now();
+        time[i] = chrono::duration_cast<chrono::microseconds>(final_time - inicio_time).count(); 
     }
     
     int max_time = 0;
@@ -197,7 +205,6 @@ int main(int argc, char const *argv[])
             }   
         }
         resultado << time[i] << endl;
-        resultado << time[i] << endl;
         if(max_time< time[i]){
             max_time = time[i];
         }
@@ -206,79 +213,8 @@ int main(int argc, char const *argv[])
     ofstream resultado_principal;
     resultado_principal.open("resultado_processo/resultado", ios::app);
     resultado_principal << "M" << matriz1_linha << "x" << matriz2_coluna <<" | P = " << *p <<" | Qtd processos = " << qtd_processos << " | Tempo = " << max_time <<" " << endl;
-    
+
+    shmctl(*mem,IPC_RMID, NULL);
+    shmctl(*time,IPC_RMID, NULL);
     return 0;
 }
-
-/*
-    
-    struct struct_processo
-{
-    int processo_pid;
-    vector<vector<int>> m1;
-    vector<vector<int>> m2;
-    vector<int> linha;
-    vector<int> coluna;
-    vector<int> resultado;
-};
-    void multiplicando_matriz(struct_processo * processo_x){
-    struct_processo * processo_temp = new struct_processo;
-    processo_temp = (struct_processo *) processo_x;
-
-    vector<vector<int>> matriz_teste = processo_temp->m1;
-    cout << "Id = "<<processo_temp->processo_pid << " P = " << *p <<  " Tam = " << matriz1_linha << endl;
-    
-    int inicial_linha = 0;
-    int inicial_coluna = 0;
-    int final_linha;
-    int final_coluna;
-    if(processo_temp->processo_pid == 0){
-        final_linha =  *p / matriz1_linha;
-        final_coluna = *p % matriz1_linha;
-    }else{
-        int inicio = processo_temp->processo_pid * *p;
-        inicial_linha = inicio / matriz1_linha;
-        inicial_coluna = inicio % matriz1_linha;
-        final_linha = (inicio + *p) / matriz1_linha;
-        final_coluna = (inicio + *p) % matriz1_linha;   
-    }
-    int controle = 0, acumula = 0, coluna = 0;
-    for (int linha = inicial_linha; linha < matriz1_linha; linha++)  
-    {
-        //matriz_resultado.push_back(vector<int>());
-        //cout << "c["<< linha <<"] "<< endl;
-        
-        for (coluna = inicial_coluna; coluna < matriz2_coluna; coluna++)  
-        {
-            //matriz_resultado[linha].push_back(0);
-            //cout << "c["<< linha <<"][" << coluna << "] "<< endl;
-            for (int i = 0; i < matriz1_linha; i++)  
-            {
-                acumula = acumula + matriz1[linha][i] * matriz2[i][coluna];  
-            }
-            //matriz_resultado[linha][coluna] = acumula;
-            processo_temp->linha.push_back(linha);
-            processo_temp->coluna.push_back(coluna);
-            //thread_temp->resultado.push_back(matriz_resultado[linha][coluna]);
-            
-            //cout << "Id"<< processo_temp->processo_pid << "c["<< linha <<"][" << coluna << "] "<< acumula << endl;
-            acumula = 0;
-            if(coluna == matriz1_coluna -1){
-                inicial_coluna = 0;
-            }
-            if(controle == *p - 1){
-                //cout << "hora de parar" << endl;
-                pthread_exit(NULL);
-            }
-            controle++; 
-        }
-    }
-    /*for (int i = 0; i < matriz2_linha; i++)
-    {
-        for (int j = 0; j < matriz2_coluna; j++)
-        {
-            cout << matriz_teste[i][j] << " ";
-        }
-        cout << endl;
-    }
-}*/

@@ -31,7 +31,7 @@ void * multiplicacao_matriz(void * struct_t){
     thread_temp = (struct_thread *) struct_t;
     
     //sleep(thread_temp->thread_id * 2);
-    cout << "ID " << (int) (size_t) thread_temp->thread_id << endl;
+    //cout << "ID " << (int) (size_t) thread_temp->thread_id << endl;
 
     int inicial_linha = 0;
     int inicial_coluna = 0;
@@ -148,16 +148,16 @@ int main(int argc, char const *argv[])
     int qtd_threads;
     if(total_elementos % p == 0){
         qtd_threads = total_elementos/p;
-        cout << "1 = " << qtd_threads << endl;
+        //cout << "1 = " << qtd_threads << endl;
     }
     else{
         qtd_threads = total_elementos/p+1;
-        cout << "2 = " << qtd_threads << endl;
+        //cout << "2 = " << qtd_threads << endl;
     }
 
     pthread_t threads[qtd_threads];
     struct_thread s_thread[qtd_threads];
-    int time[qtd_threads];
+    long int time[qtd_threads];
     int status, i;
     void * thread_return;
     

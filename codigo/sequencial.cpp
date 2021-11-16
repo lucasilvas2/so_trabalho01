@@ -56,14 +56,6 @@ int main(int argc, char const *argv[])
         }    
     }
 
-    /*for (int i = 0; i < matriz1_linha; i++)
-    {
-        for (int j = 0; j < matriz1_coluna; j++)
-        {
-            cout << matriz1[i][j] << " ";
-        }
-        cout << endl;
-    }*/
     controlador = 2;
     for (int i = 0; i < matriz2_linha; i++)
     {
@@ -89,18 +81,7 @@ int main(int argc, char const *argv[])
     vector<vector<int>> matriz_resultado;
     int acumula = 0;
     auto inicio_time = chrono::steady_clock::now();
-    /*for (int linha = 0; linha < matriz1_linha; linha++) 
-    {
-        for (int coluna = 0; coluna < matriz2_coluna; coluna++)  
-        {
-            for (int k = 0; k < matriz1_linha; k++)  
-            {
-                acumula = acumula + matriz1[linha][k] * matriz2[k][coluna];  
-            }
-            matriz_resultado[linha][coluna] = acumula;
-            acumula = 0;  
-        }
-    }  */  
+
     for (int i = 0; i < matriz1_linha; i++)
     {
         matriz_resultado.push_back(vector<int>());
@@ -133,9 +114,11 @@ int main(int argc, char const *argv[])
         }
     }
     matriz_resultado_txt << time_total;
-    matriz_resultado_txt.close(); 
+    matriz_resultado_txt.close();
+
     ofstream resultado_principal;
-    resultado_principal.open("resultado_sequencial/resultado", ios::app);
-    resultado_principal << "M" << matriz1_linha << "x" << matriz2_coluna << " | Tempo = " << time_total <<" " << endl;     
+    resultado_principal.open("resultado _sequencial/resultado", ios::app);
+    resultado_principal << "M" << matriz1_linha << "x" << matriz2_coluna << " | Tempo = " << time_total <<" " << endl; 
+    resultado_principal.close();   
     return 0;
 }
