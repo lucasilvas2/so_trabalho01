@@ -16,7 +16,7 @@ vector<vector<int>> matriz2;
 vector<vector<int>> matriz_resultado;
 
 
-void multiplicando_matriz(int i, int * mem){
+int multiplicando_matriz(int i, int * mem){
 
     //auto inicio_time = chrono::steady_clock::now();  
     int id = i;  
@@ -63,16 +63,16 @@ void multiplicando_matriz(int i, int * mem){
                 //auto final_time = chrono::steady_clock::now();
                 //time[i] = chrono::duration_cast<chrono::microseconds>(final_time - inicio_time).count(); 
                 //cout << "T " << time[i] << endl;  
-                pthread_exit(NULL);
+                return 0;
             }
             controle++; 
         }
     }
+    return 0;
     //cout << "Filho " << id << " terimei..." << endl;
     //auto final_time = chrono::steady_clock::now();
     //time[i] = chrono::duration_cast<chrono::microseconds>(final_time - inicio_time).count(); 
-    //cout << "T " << time[i] << endl;  
-
+    //cout << "T " << time[i] << endl;
 }
 
 int main(int argc, char const *argv[])
@@ -158,17 +158,22 @@ int main(int argc, char const *argv[])
     
     mem = (int *)shmat(seg_id, NULL, 0);
     time = (int *)shmat(seg_id1, NULL, 0);
-    auto inicio_time = chrono::steady_clock::now();
+    //auto inicio_time = chrono::steady_clock::now();
     for (int i = 0; i < qtd_processos; i++)
     {          
-        inicio_time = chrono::steady_clock::now(); 
-        processo[i] = fork();    
+        
+        processo[i] = fork();
         if(processo[i] < 0){
             cerr << "[ERRO] processo " << i << endl;
             exit(-1);
         }
         else if(processo[i] == 0){
+            auto inicio_time = chrono::steady_clock::now();    
             multiplicando_matriz(i, mem);
+            auto final_time = chrono::steady_clock::now();
+            int teste = chrono::duration_cast<chrono::microseconds>(final_time - inicio_time).count();
+            time[i] = teste;
+            //cout << time[i] << " " << teste << endl;
             shmdt(mem);
             shmdt(time);   
             exit(0);          
@@ -178,11 +183,10 @@ int main(int argc, char const *argv[])
     for (int i = 0; i < qtd_processos; i++)
     {  
         wait(NULL);
-        auto final_time = chrono::steady_clock::now();
-        time[i] = chrono::duration_cast<chrono::microseconds>(final_time - inicio_time).count(); 
     }
     
-    int max_time = 0;
+    int max_time = 0, controle = 0, qtd_elementos = (int)(size_t) *p ,primeiro_elemento, ultimo_elemento;
+    //cout << qtd_elementos << endl;
     for (size_t i = 0; i < qtd_processos; i++)
     {
         ofstream resultado;
@@ -196,14 +200,58 @@ int main(int argc, char const *argv[])
         
         resultado.open(pasta);
         resultado << matriz1_linha << " " << matriz2_coluna << endl;
-        int controle = 0;
-        for (int i = 0; i < matriz2_linha; i++)
-        {
-            for (int j = 0; j < matriz2_coluna; j++)
-            {
-                resultado << "c" << i << j << " " << mem[controle++]<<endl;
-            }   
+        if(i == 0){
+            primeiro_elemento = 0;
+            ultimo_elemento = qtd_elementos;
+            //cout << primeiro_elemento << " " << ultimo_elemento << endl;
+        }else{
+            primeiro_elemento = i * qtd_elementos;
+            ultimo_elemento = primeiro_elemento + qtd_elementos;
         }
+        
+        for (int j = primeiro_elemento; j < ultimo_elemento; j++)
+        {
+            resultado << "c" << (j / matriz1_linha) << (j % matriz1_linha) << " " << mem[j] << endl;
+            //cout << "Linha = " << (j / matriz1_linha) << " Coluna = " <<  (j % matriz1_linha) << endl;
+            controle++;
+        }
+        
+    /*   int inicial_linha = 0;
+        int inicial_coluna = 0;
+        int final_linha;
+        int final_coluna;
+        if(i == 0){
+            final_linha =  *p / matriz1_linha;
+            final_coluna = *p % matriz1_linha;
+        }else{
+            int inicio = i * *p;
+            inicial_linha = inicio / matriz1_linha;
+            inicial_coluna = inicio % matriz1_linha;
+            final_linha = (inicio + *p) / matriz1_linha;
+            final_coluna = (inicio + *p) % matriz1_linha;   
+        }
+        resultado << matriz1_linha << " " << matriz2_coluna << endl;
+        int controle = 0, elemento = 0, acumula = 0, coluna = 0;
+        for (int linha = inicial_linha; linha < matriz1_linha; linha++)  
+        {
+            
+            for (coluna = inicial_coluna; coluna < matriz2_coluna; coluna++)  
+            {
+
+                resultado << "c" << linha << coluna << " " << mem[elemento] << endl;
+                acumula = 0;
+                if(coluna == matriz1_coluna -1){
+                    inicial_coluna = 0;
+                }
+                if(controle == *p - 1){
+                    //cout << "hora de parar" << endl;
+                    break;
+                }
+                controle++;
+                elemento++; 
+            }
+     
+        }*/
         resultado << time[i] << endl;
         if(max_time< time[i]){
             max_time = time[i];
