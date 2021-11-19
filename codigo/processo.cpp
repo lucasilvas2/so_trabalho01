@@ -13,7 +13,6 @@ int matriz1_linha = 0, matriz1_coluna = 0;
 int matriz2_linha = 0, matriz2_coluna = 0;
 vector<vector<int>> matriz1;
 vector<vector<int>> matriz2;
-vector<vector<int>> matriz_resultado;
 
 
 int multiplicando_matriz(int i, int * mem){
@@ -77,21 +76,24 @@ int multiplicando_matriz(int i, int * mem){
 
 int main(int argc, char const *argv[])
 {
+    //recebendo o nome do arquivo das matrizes e quantidade de elementos que cada processo deve calcular
     string matriz1_nome_txt = argv[1];
     string matriz2_nome_txt = argv[2];
     int a = atoi(argv[3]);
     p = &a;
-    
-    vector<vector<int>> matriz_resultado;
+
+    //vector temporario para salvar os elementos da leitura do arquivo txt   
     vector<int> lista_temp1;
     vector<int> lista_temp2;
 
+    //inciando a leitura
     int temp;
     ifstream matriz1_e;
     ifstream matriz2_e;
     matriz1_e.open(matriz1_nome_txt);
     matriz2_e.open(matriz2_nome_txt);
-
+    
+    //verificando se os arquivos foram aberto de forma correta
     if(matriz1_e.bad()){
         cerr << "erro matriz 1" << endl;
         return 1;
@@ -101,18 +103,22 @@ int main(int argc, char const *argv[])
         return 1;
     }
     
+    //leitura de todos os elementos
     while (matriz1_e >> temp) {
         lista_temp1.push_back(temp);
     }
     while (matriz2_e >> temp) {
         lista_temp2.push_back(temp);
     }
-    //lendo tamanho da matriz
+
+    //variaveis com informação do tamanho das matrizes
     matriz1_linha = lista_temp1[0];
     matriz1_coluna = lista_temp1[1];
     matriz2_linha = lista_temp2[0];
     matriz2_coluna = lista_temp2[1];
 
+    //controlado para ignorar a informação do tamanho das matrizes
+    //passando dos vetore para um vetor de vetor
     int controlador = 2;
     for (int i = 0; i < matriz1_linha; i++)
     {
@@ -133,7 +139,7 @@ int main(int argc, char const *argv[])
             matriz2[i][j] = lista_temp2[controlador++];
         }    
     }
-
+    //fechando o arquivo
     matriz1_e.close();
     matriz2_e.close();
 
@@ -149,19 +155,20 @@ int main(int argc, char const *argv[])
         //cout << "2 = " << qtd_processos << endl;
     }
 
+    //vetor de processos para criar os processos
     pid_t processo[qtd_processos];
+    //criando o ponteiro para a usar na memória compartilhada
     int * mem;
     int * time;
-    //int time[qtd_processos];
+    
     int seg_id = shmget(IPC_PRIVATE, total_elementos * sizeof(int), IPC_CREAT | 0666);
     int seg_id1 = shmget(IPC_PRIVATE, total_elementos * sizeof(int), IPC_CREAT | 0666);
     
     mem = (int *)shmat(seg_id, NULL, 0);
     time = (int *)shmat(seg_id1, NULL, 0);
-    //auto inicio_time = chrono::steady_clock::now();
+
     for (int i = 0; i < qtd_processos; i++)
     {          
-        
         processo[i] = fork();
         if(processo[i] < 0){
             cerr << "[ERRO] processo " << i << endl;
@@ -173,7 +180,6 @@ int main(int argc, char const *argv[])
             auto final_time = chrono::steady_clock::now();
             int teste = chrono::duration_cast<chrono::microseconds>(final_time - inicio_time).count();
             time[i] = teste;
-            //cout << time[i] << " " << teste << endl;
             shmdt(mem);
             shmdt(time);   
             exit(0);          
