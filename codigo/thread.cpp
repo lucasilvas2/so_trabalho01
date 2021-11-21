@@ -8,17 +8,19 @@
 #include <pthread.h>
 #include <unistd.h>
 using namespace std;
+//variaveis no escopo grobal
 int p;
 int matriz1_linha = 0, matriz1_coluna = 0;
 int matriz2_linha = 0, matriz2_coluna = 0;
+vector<int> tempo;
 vector<vector<int>> matriz1;
 vector<vector<int>> matriz2;
 vector<vector<int>> matriz_resultado;
+//struct que será passada como parametro para função de multiplicação
 struct struct_thread
 {
     int thread_id;
     int tam_matriz;
-    int elem_ultima_thread = 0;
     vector<int> linha;
     vector<int> coluna;
     vector<int> resultado;
@@ -26,12 +28,9 @@ struct struct_thread
 
 
 void * multiplicacao_matriz(void * struct_t){
-    //int id = (int) (size_t) tid;
+    auto tempo_inicio = chrono::steady_clock::now();
     struct_thread * thread_temp = new struct_thread;
     thread_temp = (struct_thread *) struct_t;
-    
-    //sleep(thread_temp->thread_id * 2);
-    //cout << "ID " << (int) (size_t) thread_temp->thread_id << endl;
 
     int inicial_linha = 0;
     int inicial_coluna = 0;
@@ -47,40 +46,40 @@ void * multiplicacao_matriz(void * struct_t){
         final_linha = (inicio + p) / thread_temp->tam_matriz;
         final_coluna = (inicio + p) % thread_temp->tam_matriz;   
     }
-    //cout << "[" << inicial_linha<< "]" << "[" << inicial_coluna<< "]" << endl;
-    //cout << "[" << final_linha<< "]" << "[" << final_coluna << "]" << endl;
+
     int controle = 0, acumula = 0, coluna = 0;
     for (int linha = inicial_linha; linha < matriz1_linha; linha++)  
     {
-        //matriz_resultado.push_back(vector<int>());
-        //cout << "c["<< linha <<"] "<< endl;
-        
+
         for (coluna = inicial_coluna; coluna < matriz2_coluna; coluna++)  
         {
-            //matriz_resultado[linha].push_back(0);
-            //cout << "c["<< linha <<"][" << coluna << "] "<< endl;
             for (int i = 0; i < matriz1_linha; i++)  
             {
                 acumula = acumula + matriz1[linha][i] * matriz2[i][coluna];  
             }
-            //matriz_resultado[linha][coluna] = acumula;
             thread_temp->linha.push_back(linha);
             thread_temp->coluna.push_back(coluna);
-            //thread_temp->resultado.push_back(matriz_resultado[linha][coluna]);
             thread_temp->resultado.push_back(acumula);
-            //cout << "c["<< linha <<"][" << coluna << "] "<< matriz_resultado[linha][coluna] << endl;
+
             acumula = 0;
             if(coluna == matriz1_coluna -1){
                 inicial_coluna = 0;
             }
             if(controle == p - 1){
                 //cout << "hora de parar" << endl;
+                auto tempo_final = chrono::steady_clock::now();
+                auto tempo_total = chrono::duration_cast<chrono::microseconds>(tempo_final- tempo_inicio).count();
+                //cout << "tempo = " << (int) tempo_total << endl;
+                tempo.push_back(tempo_total);
                 pthread_exit(NULL);
             }
             controle++; 
         }
         
     }
+    auto tempo_final = chrono::steady_clock::now();
+    auto tempo_total = chrono::duration_cast<chrono::microseconds>(tempo_final- tempo_inicio).count();
+    tempo.push_back(tempo_total);
     pthread_exit(NULL);
 }
 int main(int argc, char const *argv[])
@@ -148,11 +147,9 @@ int main(int argc, char const *argv[])
     int qtd_threads;
     if(total_elementos % p == 0){
         qtd_threads = total_elementos/p;
-        //cout << "1 = " << qtd_threads << endl;
     }
     else{
         qtd_threads = total_elementos/p+1;
-        //cout << "2 = " << qtd_threads << endl;
     }
 
     pthread_t threads[qtd_threads];
@@ -162,35 +159,17 @@ int main(int argc, char const *argv[])
     void * thread_return;
     
     for(i=0; i < qtd_threads ; i++){
-        //cout <<  "Processo criando thread id : " << i << endl;
-        /*if(i > 0){
-            pthread_join(threads[i - 1], &thread_return);
-        }*/
-
-
-        if( i == (qtd_threads-1)){
-            s_thread[i].elem_ultima_thread = (matriz1_linha * matriz2_coluna) - (p * (i));
-        }
         s_thread[i].thread_id = i;
         s_thread[i].tam_matriz = matriz1_linha;
-        auto inicio_time = chrono::steady_clock::now();
         status = pthread_create(&threads[i], NULL, multiplicacao_matriz, &s_thread[i]);
         if(status!= 0){
             cerr << "erro thread id : " << i << endl;
             return 1;
         }
-        auto final_time = chrono::steady_clock::now();
-        auto total_time = chrono::duration_cast<chrono::microseconds>(final_time - inicio_time).count();
-        time[i] = total_time;
     }
 
     for(i=0; i < qtd_threads ; i++){
-        //cout <<  "Processo esperando thread id : " << i << endl;
-        //ofstream resultado_thread;
-        //resultado_thread.open("resultado ");
-        //cout << "Time =  " << time[i] << endl;
         pthread_join(threads[i], &thread_return);
-        //cout <<  "Finalizando thread id : " << i<< endl;
     }
     
     int max_time = 0;
@@ -209,17 +188,17 @@ int main(int argc, char const *argv[])
         resultado << matriz1_linha << " " << matriz2_coluna << endl;
         for (int k = 0; k < (s_thread[i].resultado.size()); k++)
         {
-            resultado << "c[" << s_thread[i].linha[k] << "][" << s_thread[i].coluna[k] << "] " << s_thread[i].resultado[k] << endl;
+            resultado << "c" << s_thread[i].linha[k] << s_thread[i].coluna[k] << " " << s_thread[i].resultado[k] << endl;
         }
-        resultado << time[i] << endl;
-        if(max_time< time[i]){
-            max_time = time[i];
+        resultado << tempo[i] << endl;
+        if(max_time < tempo[i]){
+            max_time = tempo[i];
         }
         resultado.close();
     }
     ofstream resultado_principal;
-    resultado_principal.open("resultado_threads/resultado", ios::app);
-    resultado_principal << "M" << matriz1_linha << "x" << matriz2_coluna <<" | P = " << p <<" | Qtd threads = " << qtd_threads << " | Tempo = " << max_time <<" " << endl;
+    resultado_principal.open("resultado_threads/resultado_1", ios::app);
+    resultado_principal << matriz1_linha << "x" << matriz2_coluna <<";" << p <<";" << qtd_threads << ";" << max_time <<";" << endl;
 
     return 0;
 }

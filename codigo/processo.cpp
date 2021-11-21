@@ -8,72 +8,68 @@
 #include <sys/shm.h>
 #include <stdlib.h>
 using namespace std;
+
 int *p;
 int matriz1_linha = 0, matriz1_coluna = 0;
 int matriz2_linha = 0, matriz2_coluna = 0;
 vector<vector<int>> matriz1;
 vector<vector<int>> matriz2;
 
-
+//receve o id e a ponteiro para memoria compartilhada
 int multiplicando_matriz(int i, int * mem){
 
-    //auto inicio_time = chrono::steady_clock::now();  
     int id = i;  
     int inicial_linha = 0;
     int inicial_coluna = 0;
     int final_linha;
     int final_coluna;
+    //determinar o ponto no poteiro onde será salvo o valor do elemento
     int ponto_mem = 0;
+    //definindo no primeiro até onde deve calcular ses elementos
     if(id == 0){
         final_linha =  *p / matriz1_linha;
         final_coluna = *p % matriz1_linha;
-    }else{
+    }
+    else{
+        //primeiro elemento
         int inicio = id * *p;
         ponto_mem = inicio;
+        //elemmento inicial - linha e coluna
         inicial_linha = inicio / matriz1_linha;
         inicial_coluna = inicio % matriz1_linha;
+        //elemmento final - linha e coluna
         final_linha = (inicio + *p) / matriz1_linha;
         final_coluna = (inicio + *p) % matriz1_linha;   
     }
+
     int controle = 0, acumula = 0, coluna = 0;
     for (int linha = inicial_linha; linha < matriz1_linha; linha++)  
-    {
-        //matriz_resultado.push_back(vector<int>());
-        //cout << "c["<< linha <<"] "<< endl;
-        
+    {    
         for (coluna = inicial_coluna; coluna < matriz2_coluna; coluna++)  
         {
-            //matriz_resultado[linha].push_back(0);
-            //cout << "c["<< linha <<"][" << coluna << "] "<< endl;
             for (int i = 0; i < matriz1_linha; i++)  
             {
                 acumula = acumula + matriz1[linha][i] * matriz2[i][coluna];  
             }
-            //matriz_resultado[linha][coluna] = acumula;
+ 
             mem[ponto_mem++] = acumula;
-            //cout << "Id = "<< id << " c["<< linha <<"][" << coluna << "] "<< acumula << endl;
+
             acumula = 0;
+            //se o cauculo da matriz chegar no último elemento da coluna 
+            //o valor é zerado para continuar a interação de forma correta
             if(coluna == matriz1_coluna -1){
                 inicial_coluna = 0;
             }
+            //se processo chegou a quantidade de elemento que deve calcular é forçado a encerrar
             if(controle == *p - 1){
-                //cout << "hora de parar" << endl;
-                //cout << "Filho " << id << " terimei..." << endl;
-                //auto final_time = chrono::steady_clock::now();
-                //time[i] = chrono::duration_cast<chrono::microseconds>(final_time - inicio_time).count(); 
-                //cout << "T " << time[i] << endl;  
+
                 return 0;
             }
             controle++; 
         }
     }
     return 0;
-    //cout << "Filho " << id << " terimei..." << endl;
-    //auto final_time = chrono::steady_clock::now();
-    //time[i] = chrono::duration_cast<chrono::microseconds>(final_time - inicio_time).count(); 
-    //cout << "T " << time[i] << endl;
 }
-
 int main(int argc, char const *argv[])
 {
     //recebendo o nome do arquivo das matrizes e quantidade de elementos que cada processo deve calcular
@@ -143,16 +139,14 @@ int main(int argc, char const *argv[])
     matriz1_e.close();
     matriz2_e.close();
 
-    //verificar quantidas de threads
+    //verificar quantidas de processos
     int total_elementos = (matriz2_linha * matriz2_linha);
     int qtd_processos;
     if(total_elementos % *p == 0){
         qtd_processos = total_elementos/ *p;
-        //cout << "1 = " << qtd_processos << endl;
     }
     else{
         qtd_processos = total_elementos/ *p+1;
-        //cout << "2 = " << qtd_processos << endl;
     }
 
     //vetor de processos para criar os processos
@@ -160,12 +154,13 @@ int main(int argc, char const *argv[])
     //criando o ponteiro para a usar na memória compartilhada
     int * mem;
     int * time;
-    
+    //criando memoria compartilhada
     int seg_id = shmget(IPC_PRIVATE, total_elementos * sizeof(int), IPC_CREAT | 0666);
     int seg_id1 = shmget(IPC_PRIVATE, total_elementos * sizeof(int), IPC_CREAT | 0666);
-    
+    //anexando ao ponteiro e local da memória
     mem = (int *)shmat(seg_id, NULL, 0);
     time = (int *)shmat(seg_id1, NULL, 0);
+
 
     for (int i = 0; i < qtd_processos; i++)
     {          
@@ -180,6 +175,7 @@ int main(int argc, char const *argv[])
             auto final_time = chrono::steady_clock::now();
             int teste = chrono::duration_cast<chrono::microseconds>(final_time - inicio_time).count();
             time[i] = teste;
+            //processo desanexando o local da memória
             shmdt(mem);
             shmdt(time);   
             exit(0);          
@@ -192,7 +188,7 @@ int main(int argc, char const *argv[])
     }
     
     int max_time = 0, controle = 0, qtd_elementos = (int)(size_t) *p ,primeiro_elemento, ultimo_elemento;
-    //cout << qtd_elementos << endl;
+    //salvando os resultado em arquivos
     for (size_t i = 0; i < qtd_processos; i++)
     {
         ofstream resultado;
@@ -209,7 +205,6 @@ int main(int argc, char const *argv[])
         if(i == 0){
             primeiro_elemento = 0;
             ultimo_elemento = qtd_elementos;
-            //cout << primeiro_elemento << " " << ultimo_elemento << endl;
         }else{
             primeiro_elemento = i * qtd_elementos;
             ultimo_elemento = primeiro_elemento + qtd_elementos;
@@ -218,56 +213,21 @@ int main(int argc, char const *argv[])
         for (int j = primeiro_elemento; j < ultimo_elemento; j++)
         {
             resultado << "c" << (j / matriz1_linha) << (j % matriz1_linha) << " " << mem[j] << endl;
-            //cout << "Linha = " << (j / matriz1_linha) << " Coluna = " <<  (j % matriz1_linha) << endl;
             controle++;
         }
         
-    /*   int inicial_linha = 0;
-        int inicial_coluna = 0;
-        int final_linha;
-        int final_coluna;
-        if(i == 0){
-            final_linha =  *p / matriz1_linha;
-            final_coluna = *p % matriz1_linha;
-        }else{
-            int inicio = i * *p;
-            inicial_linha = inicio / matriz1_linha;
-            inicial_coluna = inicio % matriz1_linha;
-            final_linha = (inicio + *p) / matriz1_linha;
-            final_coluna = (inicio + *p) % matriz1_linha;   
-        }
-        resultado << matriz1_linha << " " << matriz2_coluna << endl;
-        int controle = 0, elemento = 0, acumula = 0, coluna = 0;
-        for (int linha = inicial_linha; linha < matriz1_linha; linha++)  
-        {
-            
-            for (coluna = inicial_coluna; coluna < matriz2_coluna; coluna++)  
-            {
-
-                resultado << "c" << linha << coluna << " " << mem[elemento] << endl;
-                acumula = 0;
-                if(coluna == matriz1_coluna -1){
-                    inicial_coluna = 0;
-                }
-                if(controle == *p - 1){
-                    //cout << "hora de parar" << endl;
-                    break;
-                }
-                controle++;
-                elemento++; 
-            }
-     
-        }*/
         resultado << time[i] << endl;
         if(max_time< time[i]){
             max_time = time[i];
         }
         resultado.close();
     }
-    ofstream resultado_principal;
-    resultado_principal.open("resultado_processo/resultado", ios::app);
-    resultado_principal << "M" << matriz1_linha << "x" << matriz2_coluna <<" | P = " << *p <<" | Qtd processos = " << qtd_processos << " | Tempo = " << max_time <<" " << endl;
 
+    ofstream resultado_principal;
+    resultado_principal.open("resultado_processo/resultado_1", ios::app);
+    resultado_principal << matriz1_linha << "x" << matriz2_coluna <<" | P = " << *p <<" | Qtd processos = " << qtd_processos << " | Tempo = " << max_time <<" " << endl;
+
+    //liberando a memoria compartilhada
     shmctl(*mem,IPC_RMID, NULL);
     shmctl(*time,IPC_RMID, NULL);
     return 0;
